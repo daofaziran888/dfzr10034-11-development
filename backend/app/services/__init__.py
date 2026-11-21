@@ -21,6 +21,7 @@ from app.services.data_contract import DataContractService
 from app.services.compliance_scan import ComplianceScanService
 from app.services.issue_track import IssueTrackService
 from app.services.version_history import VersionHistoryService
+from app.services.snapshot_release import SnapshotReleaseService
 from app.services.schedule_job import ScheduleJobService
 from app.services.diff_report import DiffReportService
 from app.services.owner_mgr import OwnerMgrService
@@ -50,6 +51,7 @@ SERVICES: dict[str, BaseModuleService] = {
     "compliance_scan": COMPLIANCE_SERVICE,
     "issue_track": IssueTrackService(),
     "version_history": VersionHistoryService(),
+    "snapshot_release": SnapshotReleaseService(),
     "schedule_job": ScheduleJobService(),
     "diff_report": DiffReportService(),
     "owner_mgr": OwnerMgrService(),

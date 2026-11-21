@@ -27,10 +27,76 @@ class Store:
         self._change_log: list[dict[str, Any]] = []
         self._snapshots: dict[str, list[dict[str, Any]]] = {}
         self._pipeline_state: dict[str, dict[str, Any]] = {}
+        # 快照发布：基线、不可变发布记录、凭据绑定与主版本指针
+        self._baselines: dict[str, dict[str, Any]] = {}
+        self._releases: dict[str, dict[str, Any]] = {}
+        self._receipts: dict[str, dict[str, Any]] = {}
+        self._release_heads: dict[str, str] = {}
+        self._seed_t12_baseline()
+
+    def _seed_t12_baseline(self) -> None:
+        """写入题设基线 T12：currency 为三字符、net_price 小数位为二位。"""
+        baseline = {
+            "asset_code": "ORD_LEDGER",
+            "baseline_tag": "T12",
+            "fields": {
+                "order_id": "10001",
+                "currency": "USD",
+                "net_price": "7.12",
+            },
+            "schema": {
+                "order_id": "BIGINT",
+                "currency": "VARCHAR(3)",
+                "net_price": "DECIMAL(12,2)",
+            },
+            "created_at": _time.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        self._baselines[self._baseline_key("ORD_LEDGER", "T12")] = baseline
+
+    @staticmethod
+    def _baseline_key(asset_code: str, baseline_tag: str) -> str:
+        return f"{asset_code}:{baseline_tag}"
 
     def reset(self) -> None:
         """清空所有数据并重新种子化（测试用）。"""
         self._seed()
+
+    # ── 快照发布注册表 ────────────────────────────────────────
+
+    def save_baseline(self, baseline: dict[str, Any]) -> None:
+        """登记一条版本基线（同键覆盖由服务层保证不发生）。"""
+        key = self._baseline_key(baseline["asset_code"], baseline["baseline_tag"])
+        self._baselines[key] = baseline
+
+    def get_baseline(self, asset_code: str, baseline_tag: str) -> dict[str, Any] | None:
+        return self._baselines.get(self._baseline_key(asset_code, baseline_tag))
+
+    def save_release(self, release: dict[str, Any]) -> None:
+        """落下一份不可变发布快照。"""
+        self._releases[release["发布编号"]] = release
+
+    def get_release(self, release_id: str) -> dict[str, Any] | None:
+        return self._releases.get(release_id)
+
+    def list_releases(self, asset_code: str | None = None) -> list[dict[str, Any]]:
+        releases = list(self._releases.values())
+        if asset_code:
+            releases = [r for r in releases if r.get("目标资产") == asset_code]
+        return sorted(releases, key=lambda r: r.get("发布时间", ""))
+
+    def bind_receipt(self, receipt_token: str, binding: dict[str, Any]) -> None:
+        """把凭据绑定到发布标识与小组；绑定后不可改派。"""
+        self._receipts[receipt_token] = binding
+
+    def get_receipt_binding(self, receipt_token: str) -> dict[str, Any] | None:
+        return self._receipts.get(receipt_token)
+
+    def set_head(self, asset_code: str, release_id: str) -> None:
+        """推进资产的主版本指针。"""
+        self._release_heads[asset_code] = release_id
+
+    def get_head(self, asset_code: str) -> str | None:
+        return self._release_heads.get(asset_code)
 
     # ── 基础操作 ──────────────────────────────────────────────
 

@@ -212,6 +212,17 @@ export const MODULES: ModuleMeta[] = [
     metrics: ["快照总数", "历史版本数", "已标注数"],
   },
   {
+    key: "snapshot_release",
+    name: "快照发布",
+    entity: "快照发布",
+    desc: "把同一基线上的字段变更发布为可引用、按对账小组隔离凭据的版本快照，支持账本还原、字段追踪与跨组对账。",
+    fields: ["发布编号", "目标资产", "基线标签", "父版本", "对账小组", "发布标识", "凭据", "字段变更", "发布时间"],
+    statuses: ["已确认", "主版本", "已归档"],
+    actions: ["推进主版本"],
+    actionTargets: {"推进主版本": "主版本"},
+    metrics: ["发布总数", "已确认快照", "主版本数"],
+  },
+  {
     key: "schedule_job",
     name: "调度治理",
     entity: "治理调度",
